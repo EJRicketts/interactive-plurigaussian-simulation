@@ -13,6 +13,12 @@ class ControlsPanel(QWidget):
     clearLithotype = pyqtSignal()
     toolChanged = pyqtSignal(str)
     updateParameters = pyqtSignal()
+    undoRequested = pyqtSignal()
+    redoRequested = pyqtSignal()
+    resetToDefaults = pyqtSignal()
+    saveState = pyqtSignal()
+    loadState = pyqtSignal()
+    exportImages = pyqtSignal()
     def __init__(self):
         super().__init__()
         self.layout = QVBoxLayout(self)
@@ -56,6 +62,22 @@ class ControlsPanel(QWidget):
         
         brush_layout.addLayout(tool_layout)
         
+        # Undo/Redo buttons
+        undo_redo_layout = QHBoxLayout()
+        self.undo_button = QPushButton("Undo")
+        self.undo_button.setToolTip("Undo last action (Ctrl+Z)")
+        self.undo_button.clicked.connect(self.undoRequested)
+        self.undo_button.setEnabled(False)  # Start disabled
+        undo_redo_layout.addWidget(self.undo_button)
+        
+        self.redo_button = QPushButton("Redo")
+        self.redo_button.setToolTip("Redo last undone action (Ctrl+Y)")
+        self.redo_button.clicked.connect(self.redoRequested)
+        self.redo_button.setEnabled(False)  # Start disabled
+        undo_redo_layout.addWidget(self.redo_button)
+        
+        brush_layout.addLayout(undo_redo_layout)
+        
         self.layout.addWidget(brush_group)
 
         # Phase Controls
@@ -88,6 +110,30 @@ class ControlsPanel(QWidget):
         self.update_parameters_button.setToolTip("Apply length scale changes and regenerate fields while keeping lithotype.")
         self.update_parameters_button.clicked.connect(self.updateParameters)
         sim_layout.addWidget(self.update_parameters_button)
+        
+        self.reset_defaults_button = QPushButton("Reset to Defaults")
+        self.reset_defaults_button.setToolTip("Reset all parameters to default values and clear lithotype.")
+        self.reset_defaults_button.clicked.connect(self.resetToDefaults)
+        sim_layout.addWidget(self.reset_defaults_button)
+        
+        # Save/Load buttons
+        save_load_layout = QHBoxLayout()
+        self.save_button = QPushButton("Save State")
+        self.save_button.setToolTip("Save current lithotype and parameters to file.")
+        self.save_button.clicked.connect(self.saveState)
+        save_load_layout.addWidget(self.save_button)
+        
+        self.load_button = QPushButton("Load State")
+        self.load_button.setToolTip("Load lithotype and parameters from file.")
+        self.load_button.clicked.connect(self.loadState)
+        save_load_layout.addWidget(self.load_button)
+        
+        sim_layout.addLayout(save_load_layout)
+        
+        self.export_button = QPushButton("Export Images")
+        self.export_button.setToolTip("Export lithotype and realization as PNG images.")
+        self.export_button.clicked.connect(self.exportImages)
+        sim_layout.addWidget(self.export_button)
 
         
 
@@ -180,3 +226,33 @@ class ControlsPanel(QWidget):
             for i, btn in enumerate(self.phase_buttons):
                 if i != phase:
                     btn.setChecked(False)
+
+    def update_undo_redo_buttons(self, can_undo, can_redo):
+        """Update the enabled state of undo/redo buttons"""
+        self.undo_button.setEnabled(can_undo)
+        self.redo_button.setEnabled(can_redo)
+
+    def reset_to_default_values(self):
+        """Reset all controls to their default values"""
+        # Default values
+        default_brush_size = 25
+        default_len_scale = 15.0
+        default_domain_width = 250
+        default_domain_height = 250
+        
+        # Reset controls
+        self.size_slider.setValue(default_brush_size)
+        self.shape_combo.setCurrentText("Circle")
+        self.len_scale_x_spinbox.setValue(default_len_scale)
+        self.len_scale_y_spinbox.setValue(default_len_scale)
+        self.width_spinbox.setValue(default_domain_width)
+        self.height_spinbox.setValue(default_domain_height)
+        
+        # Reset tool selection
+        self.brush_tool_button.setChecked(True)
+        self.fill_tool_button.setChecked(False)
+        
+        # Reset phase selection to phase 0
+        if self.phase_buttons:
+            for i, btn in enumerate(self.phase_buttons):
+                btn.setChecked(i == 0)

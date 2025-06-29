@@ -30,9 +30,20 @@ class CanvasWidget(QWidget):
         self.current_tool = "brush"
         self.current_phase = 1
         
+        # Undo/Redo system
+        self.history = [self.grid.copy()]  # Start with initial state
+        self.history_index = 0
+        self.max_history = 20  # Limit history to prevent memory issues
+        
         self.target_rect = QRect()
         
         self.setMinimumSize(200, 200)
+        self.setFocusPolicy(Qt.StrongFocus)  # Enable keyboard focus
+        self.setMouseTracking(True)  # Enable mouse tracking for preview
+        
+        # Brush preview
+        self.mouse_pos = QPoint(-1, -1)  # Track mouse position
+        self.show_preview = False
 
     def set_brush_size(self, size):
         self.brush_size = size
@@ -46,6 +57,46 @@ class CanvasWidget(QWidget):
     def set_phase(self, phase):
         self.current_phase = phase
 
+    def save_state(self):
+        """Save current grid state to history after an action is completed"""
+        # Remove any states after current index (when user made changes after undo)
+        self.history = self.history[:self.history_index + 1]
+        
+        # Add the new state (current grid after the action)
+        self.history.append(self.grid.copy())
+        self.history_index = len(self.history) - 1
+        
+        # Limit history size
+        if len(self.history) > self.max_history:
+            self.history.pop(0)
+            self.history_index -= 1
+
+    def undo(self):
+        """Undo last operation"""
+        if self.history_index > 0:
+            self.history_index -= 1
+            self.grid = self.history[self.history_index].copy()
+            self.set_data(self.grid)
+            return True
+        return False
+
+    def redo(self):
+        """Redo last undone operation"""
+        if self.history_index < len(self.history) - 1:
+            self.history_index += 1
+            self.grid = self.history[self.history_index].copy()
+            self.set_data(self.grid)
+            return True
+        return False
+
+    def can_undo(self):
+        """Check if undo is possible"""
+        return self.history_index > 0
+
+    def can_redo(self):
+        """Check if redo is possible"""
+        return self.history_index < len(self.history) - 1
+
     def paintEvent(self, event):
         painter = QPainter(self)
         painter.setRenderHint(QPainter.Antialiasing, False)
@@ -57,25 +108,107 @@ class CanvasWidget(QWidget):
         self.target_rect.moveCenter(widget_rect.center())
 
         painter.drawImage(self.target_rect, self.image, self.image.rect())
+        
+        # Draw brush preview
+        if self.show_preview and self.current_tool == "brush" and not self.drawing:
+            self.draw_brush_preview(painter)
 
     def mousePressEvent(self, event):
         if event.button() == Qt.LeftButton and self.target_rect.contains(event.pos()):
             ix, iy = self.map_widget_to_image_coords(event.pos())
             if self.current_tool == "fill":
                 self._flood_fill(iy, ix, self.grid[iy, ix], self.current_phase)
+                # Save state after fill operation is complete
+                self.save_state()
                 self.strokeFinished.emit(self.grid)
             elif self.current_tool == "brush":
                 self.drawing = True
                 self.draw_at_pos(event.pos())
 
     def mouseMoveEvent(self, event):
-        if self.drawing and self.target_rect.contains(event.pos()):
-            self.draw_at_pos(event.pos())
+        # Update mouse position for brush preview
+        if self.target_rect.contains(event.pos()):
+            self.mouse_pos = event.pos()
+            self.show_preview = True
+            if self.drawing:
+                self.draw_at_pos(event.pos())
+        else:
+            self.show_preview = False
+        self.update()  # Trigger repaint for preview
 
     def mouseReleaseEvent(self, event):
         if event.button() == Qt.LeftButton and self.drawing:
             self.drawing = False
+            # Save state after brush stroke is complete
+            self.save_state()
             self.strokeFinished.emit(self.grid)
+
+    def keyPressEvent(self, event):
+        """Handle keyboard shortcuts for undo/redo"""
+        if event.modifiers() & Qt.ControlModifier:
+            if event.key() == Qt.Key_Z:
+                if self.undo():
+                    self.strokeFinished.emit(self.grid)
+                event.accept()
+                return
+            elif event.key() == Qt.Key_Y:
+                if self.redo():
+                    self.strokeFinished.emit(self.grid)
+                event.accept()
+                return
+        super().keyPressEvent(event)
+
+    def enterEvent(self, event):
+        """Mouse entered the widget"""
+        self.show_preview = True
+        self.update()
+
+    def leaveEvent(self, event):
+        """Mouse left the widget"""
+        self.show_preview = False
+        self.update()
+
+    def draw_brush_preview(self, painter):
+        """Draw brush preview at mouse position"""
+        if self.mouse_pos.x() < 0 or self.mouse_pos.y() < 0:
+            return
+            
+        # Map mouse position to image coordinates for size calculation
+        ix, iy = self.map_widget_to_image_coords(self.mouse_pos)
+        
+        # Calculate brush size in widget coordinates
+        scale_x = self.target_rect.width() / self.image.width()
+        scale_y = self.target_rect.height() / self.image.height()
+        scale = min(scale_x, scale_y)  # Use the smaller scale to maintain aspect ratio
+        
+        widget_brush_size = self.brush_size * scale
+        half_brush = widget_brush_size / 2
+        
+        # Set up preview drawing
+        painter.setPen(QPen(QColor(255, 255, 255, 180), 2, Qt.DashLine))  # Semi-transparent white dashed line
+        painter.setBrush(Qt.NoBrush)
+        
+        # Draw preview shape
+        if self.brush_shape.lower() == "circle":
+            painter.drawEllipse(self.mouse_pos, int(half_brush), int(half_brush))
+        elif self.brush_shape.lower() == "triangle":
+            from PyQt5.QtGui import QPolygon
+            import math
+            height = int(half_brush * math.sqrt(3))
+            points = [
+                QPoint(self.mouse_pos.x(), self.mouse_pos.y() - height//2),
+                QPoint(self.mouse_pos.x() - int(half_brush), self.mouse_pos.y() + height//2),
+                QPoint(self.mouse_pos.x() + int(half_brush), self.mouse_pos.y() + height//2),
+            ]
+            polygon = QPolygon(points)
+            painter.drawPolygon(polygon)
+        elif self.brush_shape.lower() == "square":
+            painter.drawRect(
+                self.mouse_pos.x() - int(half_brush),
+                self.mouse_pos.y() - int(half_brush),
+                int(widget_brush_size),
+                int(widget_brush_size)
+            )
 
     def map_widget_to_image_coords(self, pos):
         x_rel = pos.x() - self.target_rect.x()
