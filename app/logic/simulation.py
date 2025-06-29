@@ -35,6 +35,29 @@ class SimulationEngine:
         self.model2.len_scale = [self.len_scale_x, self.len_scale_y]
         self.regenerate_fields()
 
+    def set_domain_size(self, width, height):
+        """Update domain size and reinitialize grid and coordinates"""
+        self.width = width
+        self.height = height
+        self.grid_shape = (height, width)
+        
+        # Preserve existing lithotypes if possible, otherwise reset
+        old_lithotypes = self.lithotypes.copy()
+        self.lithotypes = np.zeros(self.grid_shape)
+        
+        # Copy over lithotypes that fit in the new grid
+        min_height = min(old_lithotypes.shape[0], height)
+        min_width = min(old_lithotypes.shape[1], width)
+        self.lithotypes[:min_height, :min_width] = old_lithotypes[:min_height, :min_width]
+        
+        # Update coordinates for new grid size
+        x = np.arange(0, width, 1)  # x-coordinates (columns)
+        y = np.arange(0, height, 1) # y-coordinates (rows)
+        self.coords = [y, x]
+        
+        # Regenerate fields with new domain size
+        self.regenerate_fields()
+
     def update_lithotypes(self, grid: np.ndarray):
         self.lithotypes = grid
 

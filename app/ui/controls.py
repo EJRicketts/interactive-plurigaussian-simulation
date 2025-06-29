@@ -12,6 +12,7 @@ class ControlsPanel(QWidget):
     lengthScaleChanged = pyqtSignal(float, float)
     clearLithotype = pyqtSignal()
     toolChanged = pyqtSignal(str)
+    updateParameters = pyqtSignal()
     def __init__(self):
         super().__init__()
         self.layout = QVBoxLayout(self)
@@ -82,6 +83,11 @@ class ControlsPanel(QWidget):
         self.clear_lithotype_button.setToolTip("Clear the lithotype grid to phase 0.")
         self.clear_lithotype_button.clicked.connect(self.clearLithotype)
         sim_layout.addWidget(self.clear_lithotype_button)
+        
+        self.update_parameters_button = QPushButton("Update Parameters")
+        self.update_parameters_button.setToolTip("Apply length scale changes and regenerate fields while keeping lithotype.")
+        self.update_parameters_button.clicked.connect(self.updateParameters)
+        sim_layout.addWidget(self.update_parameters_button)
 
         
 
@@ -96,7 +102,7 @@ class ControlsPanel(QWidget):
         self.len_scale_x_spinbox.setRange(1.0, 100.0)
         self.len_scale_x_spinbox.setValue(15.0)
         self.len_scale_x_spinbox.setSingleStep(1.0)
-        self.len_scale_x_spinbox.valueChanged.connect(lambda value: self.lengthScaleChanged.emit(value, self.len_scale_y_spinbox.value()))
+        # Remove automatic updates - will be triggered by button instead
         x_layout.addWidget(self.len_scale_x_spinbox)
         length_scale_layout.addLayout(x_layout)
 
@@ -106,10 +112,34 @@ class ControlsPanel(QWidget):
         self.len_scale_y_spinbox.setRange(1.0, 100.0)
         self.len_scale_y_spinbox.setValue(15.0)
         self.len_scale_y_spinbox.setSingleStep(1.0)
-        self.len_scale_y_spinbox.valueChanged.connect(lambda value: self.lengthScaleChanged.emit(self.len_scale_x_spinbox.value(), value))
+        # Remove automatic updates - will be triggered by button instead
         y_layout.addWidget(self.len_scale_y_spinbox)
         length_scale_layout.addLayout(y_layout)
         self.layout.addWidget(length_scale_group)
+
+        # Domain Size Inputs
+        domain_size_group = QGroupBox("Domain Size")
+        domain_size_layout = QHBoxLayout()
+        domain_size_group.setLayout(domain_size_layout)
+
+        width_layout = QVBoxLayout()
+        width_layout.addWidget(QLabel("Width:"))
+        self.width_spinbox = QSpinBox()
+        self.width_spinbox.setRange(50, 500)
+        self.width_spinbox.setValue(250)
+        self.width_spinbox.setSingleStep(10)
+        width_layout.addWidget(self.width_spinbox)
+        domain_size_layout.addLayout(width_layout)
+
+        height_layout = QVBoxLayout()
+        height_layout.addWidget(QLabel("Height:"))
+        self.height_spinbox = QSpinBox()
+        self.height_spinbox.setRange(50, 500)
+        self.height_spinbox.setValue(250)
+        self.height_spinbox.setSingleStep(10)
+        height_layout.addWidget(self.height_spinbox)
+        domain_size_layout.addLayout(height_layout)
+        self.layout.addWidget(domain_size_group)
 
         self.layout.addWidget(sim_group)
 

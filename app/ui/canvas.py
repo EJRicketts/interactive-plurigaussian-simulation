@@ -19,9 +19,9 @@ class CanvasWidget(QWidget):
 
     def __init__(self, width=250, height=250):
         super().__init__()
-        self.image_size = QSize(height, width)
+        self.image_size = QSize(width, height)
         self.image = QImage(self.image_size, QImage.Format_RGB32)
-        self.grid = np.zeros((width, height), dtype=int)
+        self.grid = np.zeros((height, width), dtype=int)
         self.image.fill(self.COLORS[0]) # Initialize with Phase 0 color (black)
         
         self.drawing = False
@@ -174,15 +174,15 @@ class CanvasWidget(QWidget):
         self.update()
 
     def set_data(self, grid: np.ndarray):
-        self.grid = grid
-        height, width = grid.shape
+        self.grid = grid.astype(int)  # Ensure grid contains integers
+        height, width = self.grid.shape
         if self.image.size() != QSize(width, height):
             self.image = QImage(width, height, QImage.Format_RGB32)
             self.image_size = QSize(width, height)
 
         for y in range(height):
             for x in range(width):
-                phase = self.grid[y, x]
+                phase = int(self.grid[y, x])  # Explicitly convert to int
                 self.image.setPixelColor(x, y, self.COLORS[phase % len(self.COLORS)])
         self.update()
 
