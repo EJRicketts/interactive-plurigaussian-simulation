@@ -1,8 +1,8 @@
 from PyQt5.QtWidgets import QWidget, QApplication
-from PyQt5.QtGui import QImage, QPainter, QColor, QPen
+from PyQt5.QtGui import QImage, QPainter, QColor, QPen, QPolygon
 from PyQt5.QtCore import Qt, QSize, pyqtSignal, QPoint, QRect
 import numpy as np
-import sys
+import math
 
 
 class CanvasWidget(QWidget):
@@ -97,6 +97,24 @@ class CanvasWidget(QWidget):
     def can_redo(self):
         """Check if redo is possible"""
         return self.history_index < len(self.history) - 1
+
+    def _create_triangle_polygon(self, center_x, center_y, half_brush):
+        """Create equilateral triangle polygon centered at given coordinates"""
+        height = int(half_brush * math.sqrt(3))
+        points = [
+            QPoint(center_x, center_y - height // 2),  # Top vertex
+            QPoint(center_x - half_brush, center_y + height // 2),  # Bottom left
+            QPoint(center_x + half_brush, center_y + height // 2),  # Bottom right
+        ]
+        return QPolygon(points)
+
+    def _create_triangle_mask(self, x_coords, y_coords, half_brush):
+        """Create equilateral triangle mask for brush operations"""
+        height = int(half_brush * math.sqrt(3))
+        # Triangle with apex at top, base at bottom
+        return (y_coords >= abs(x_coords) * math.sqrt(3) - height // 2) & (
+            y_coords <= height // 2
+        )
 
     def paintEvent(self, event):
         painter = QPainter(self)
@@ -246,17 +264,7 @@ class CanvasWidget(QWidget):
         if self.brush_shape == "circle":
             painter.drawEllipse(QPoint(ix, iy), half_brush, half_brush)
         elif self.brush_shape == "triangle":
-            from PyQt5.QtGui import QPolygon
-            import math
-
-            # Create equilateral triangle with center at (ix, iy)
-            height = int(half_brush * math.sqrt(3))
-            points = [
-                QPoint(ix, iy - height // 2),  # Top vertex
-                QPoint(ix - half_brush, iy + height // 2),  # Bottom left
-                QPoint(ix + half_brush, iy + height // 2),  # Bottom right
-            ]
-            polygon = QPolygon(points)
+            polygon = self._create_triangle_polygon(ix, iy, half_brush)
             painter.drawPolygon(polygon)
         elif self.brush_shape == "square":
             painter.drawRect(start_x, start_y, self.brush_size, self.brush_size)
@@ -276,14 +284,7 @@ class CanvasWidget(QWidget):
         if self.brush_shape == "circle":
             mask = x_coords**2 + y_coords**2 <= half_brush**2
         elif self.brush_shape == "triangle":
-            # Create equilateral triangle mask
-            import math
-
-            height = int(half_brush * math.sqrt(3))
-            # Triangle with apex at top, base at bottom
-            mask = (y_coords >= abs(x_coords) * math.sqrt(3) - height // 2) & (
-                y_coords <= height // 2
-            )
+            mask = self._create_triangle_mask(x_coords, y_coords, half_brush)
         elif self.brush_shape == "square":
             # Square brush mask
             mask = (abs(x_coords) <= half_brush) & (abs(y_coords) <= half_brush)
@@ -342,19 +343,3 @@ class CanvasWidget(QWidget):
         self.update()
 
 
-if __name__ == "__main__":
-    app = QApplication(sys.argv)
-    canvas = CanvasWidget()
-
-    def on_stroke_finished(grid):
-        print("Stroke finished. Grid shape:", grid.shape)
-        print("Number of modified cells:", np.count_nonzero(grid))
-        # Create a dummy result grid to test set_data
-        result_grid = np.random.randint(0, 6, size=grid.shape)
-        # In a real app, this would be a separate widget
-        # For this test, we'll just display it on the same canvas after a delay
-        # canvas.set_data(result_grid)
-
-    canvas.strokeFinished.connect(on_stroke_finished)
-    canvas.show()
-    sys.exit(app.exec_())

@@ -12,8 +12,22 @@ from PyQt5.QtWidgets import (
     QDoubleSpinBox,
     QButtonGroup,
 )
-from PyQt5.QtCore import pyqtSignal, Qt, QTimer
+from PyQt5.QtCore import pyqtSignal, Qt
 from PyQt5.QtGui import QIcon, QPixmap, QColor
+
+# Constants
+BRUSH_SIZE_MIN = 1
+BRUSH_SIZE_MAX = 75
+BRUSH_SIZE_DEFAULT = 25
+LENGTH_SCALE_MIN = 1.0
+LENGTH_SCALE_MAX = 100.0
+LENGTH_SCALE_DEFAULT = 15.0
+DOMAIN_WIDTH_MIN = 50
+DOMAIN_WIDTH_MAX = 500
+DOMAIN_HEIGHT_MIN = 50
+DOMAIN_HEIGHT_MAX = 500
+DOMAIN_SIZE_DEFAULT = 250
+DOMAIN_SIZE_STEP = 10
 
 
 class ControlsPanel(QWidget):
@@ -51,8 +65,8 @@ class ControlsPanel(QWidget):
 
         self.size_slider = QSlider(Qt.Horizontal)
         self.size_slider.setToolTip("Adjust the size of the brush.")
-        self.size_slider.setRange(1, 75)
-        self.size_slider.setValue(25)
+        self.size_slider.setRange(BRUSH_SIZE_MIN, BRUSH_SIZE_MAX)
+        self.size_slider.setValue(BRUSH_SIZE_DEFAULT)
         self.size_slider.valueChanged.connect(self.sizeChanged)
         brush_layout.addWidget(self.size_slider)
 
@@ -166,8 +180,8 @@ class ControlsPanel(QWidget):
         x_layout = QVBoxLayout()
         x_layout.addWidget(QLabel("Length Scale X:"))
         self.len_scale_x_spinbox = QDoubleSpinBox()
-        self.len_scale_x_spinbox.setRange(1.0, 100.0)
-        self.len_scale_x_spinbox.setValue(15.0)
+        self.len_scale_x_spinbox.setRange(LENGTH_SCALE_MIN, LENGTH_SCALE_MAX)
+        self.len_scale_x_spinbox.setValue(LENGTH_SCALE_DEFAULT)
         self.len_scale_x_spinbox.setSingleStep(1.0)
         # Remove automatic updates - will be triggered by button instead
         x_layout.addWidget(self.len_scale_x_spinbox)
@@ -176,8 +190,8 @@ class ControlsPanel(QWidget):
         y_layout = QVBoxLayout()
         y_layout.addWidget(QLabel("Length Scale Y:"))
         self.len_scale_y_spinbox = QDoubleSpinBox()
-        self.len_scale_y_spinbox.setRange(1.0, 100.0)
-        self.len_scale_y_spinbox.setValue(15.0)
+        self.len_scale_y_spinbox.setRange(LENGTH_SCALE_MIN, LENGTH_SCALE_MAX)
+        self.len_scale_y_spinbox.setValue(LENGTH_SCALE_DEFAULT)
         self.len_scale_y_spinbox.setSingleStep(1.0)
         # Remove automatic updates - will be triggered by button instead
         y_layout.addWidget(self.len_scale_y_spinbox)
@@ -192,18 +206,18 @@ class ControlsPanel(QWidget):
         width_layout = QVBoxLayout()
         width_layout.addWidget(QLabel("Width:"))
         self.width_spinbox = QSpinBox()
-        self.width_spinbox.setRange(50, 500)
-        self.width_spinbox.setValue(250)
-        self.width_spinbox.setSingleStep(10)
+        self.width_spinbox.setRange(DOMAIN_WIDTH_MIN, DOMAIN_WIDTH_MAX)
+        self.width_spinbox.setValue(DOMAIN_SIZE_DEFAULT)
+        self.width_spinbox.setSingleStep(DOMAIN_SIZE_STEP)
         width_layout.addWidget(self.width_spinbox)
         domain_size_layout.addLayout(width_layout)
 
         height_layout = QVBoxLayout()
         height_layout.addWidget(QLabel("Height:"))
         self.height_spinbox = QSpinBox()
-        self.height_spinbox.setRange(50, 500)
-        self.height_spinbox.setValue(250)
-        self.height_spinbox.setSingleStep(10)
+        self.height_spinbox.setRange(DOMAIN_HEIGHT_MIN, DOMAIN_HEIGHT_MAX)
+        self.height_spinbox.setValue(DOMAIN_SIZE_DEFAULT)
+        self.height_spinbox.setSingleStep(DOMAIN_SIZE_STEP)
         height_layout.addWidget(self.height_spinbox)
         domain_size_layout.addLayout(height_layout)
         self.layout.addWidget(domain_size_group)
@@ -253,19 +267,13 @@ class ControlsPanel(QWidget):
 
     def reset_to_default_values(self):
         """Reset all controls to their default values"""
-        # Default values
-        default_brush_size = 25
-        default_len_scale = 15.0
-        default_domain_width = 250
-        default_domain_height = 250
-
-        # Reset controls
-        self.size_slider.setValue(default_brush_size)
+        # Reset controls using defined constants
+        self.size_slider.setValue(BRUSH_SIZE_DEFAULT)
         self.shape_combo.setCurrentText("Circle")
-        self.len_scale_x_spinbox.setValue(default_len_scale)
-        self.len_scale_y_spinbox.setValue(default_len_scale)
-        self.width_spinbox.setValue(default_domain_width)
-        self.height_spinbox.setValue(default_domain_height)
+        self.len_scale_x_spinbox.setValue(LENGTH_SCALE_DEFAULT)
+        self.len_scale_y_spinbox.setValue(LENGTH_SCALE_DEFAULT)
+        self.width_spinbox.setValue(DOMAIN_SIZE_DEFAULT)
+        self.height_spinbox.setValue(DOMAIN_SIZE_DEFAULT)
 
         # Reset tool selection
         self.brush_tool_button.setChecked(True)

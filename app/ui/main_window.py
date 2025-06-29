@@ -1,4 +1,3 @@
-import sys
 import json
 import numpy as np
 from PyQt5.QtWidgets import (
@@ -11,9 +10,16 @@ from PyQt5.QtWidgets import (
     QScrollArea,
     QFileDialog,
     QMessageBox,
+    QLabel,
 )
 from PyQt5.QtCore import Qt, QSize
 from PyQt5.QtGui import QImage
+
+# Constants
+CONTROLS_WIDTH = 350
+CANVAS_WIDTH = 600
+TITLE_HEIGHT = 20
+DEFAULT_SPLITTER_SIZES = [350, 600, 600]
 from app.ui.canvas import CanvasWidget
 from app.ui.controls import ControlsPanel
 from app.ui.result_widget import ResultWidget
@@ -56,14 +62,13 @@ class MainWindow(QMainWindow):
         self.controls_scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
 
         # Create canvas containers with titles
-        from PyQt5.QtWidgets import QVBoxLayout, QLabel
 
         l_container = QWidget()
         l_layout = QVBoxLayout(l_container)
         l_layout.setContentsMargins(0, 0, 0, 0)
         l_title = QLabel("Lithotype")
         l_title.setAlignment(Qt.AlignCenter)
-        l_title.setMaximumHeight(20)
+        l_title.setMaximumHeight(TITLE_HEIGHT)
         l_layout.addWidget(l_title)
         l_layout.addWidget(self.l_canvas_widget, 1)  # Give canvas stretch factor of 1
 
@@ -72,7 +77,7 @@ class MainWindow(QMainWindow):
         p_layout.setContentsMargins(0, 0, 0, 0)
         p_title = QLabel("Realisation")
         p_title.setAlignment(Qt.AlignCenter)
-        p_title.setMaximumHeight(20)
+        p_title.setMaximumHeight(TITLE_HEIGHT)
         p_layout.addWidget(p_title)
         p_layout.addWidget(self.p_canvas_widget, 1)  # Give canvas stretch factor of 1
 
@@ -81,7 +86,7 @@ class MainWindow(QMainWindow):
         self.main_splitter.addWidget(p_container)
 
         # Set initial sizes for the splitter to make L and P canvases equal
-        self.main_splitter.setSizes([350, 600, 600])  # Example: Controls, L, P
+        self.main_splitter.setSizes(DEFAULT_SPLITTER_SIZES)
         self.main_splitter.setStretchFactor(0, 0)  # Fixed width for controls
         self.main_splitter.setStretchFactor(1, 1)  # Dynamic resize for L canvas
         self.main_splitter.setStretchFactor(2, 1)  # Dynamic resize for P canvas
@@ -328,6 +333,7 @@ class MainWindow(QMainWindow):
 
 
 if __name__ == "__main__":
+    import sys
     app = QApplication(sys.argv)
     window = MainWindow()
     window.show()
