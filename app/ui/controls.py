@@ -1,18 +1,17 @@
 from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QGroupBox, QComboBox, 
                              QSlider, QPushButton, QToolButton, QHBoxLayout,
-                             QLabel, QSpinBox, QDoubleSpinBox)
+                             QLabel, QSpinBox, QDoubleSpinBox, QButtonGroup)
 from PyQt5.QtCore import pyqtSignal, Qt, QTimer
 from PyQt5.QtGui import QIcon, QPixmap, QColor
 
 class ControlsPanel(QWidget):
     shapeChanged = pyqtSignal(str)
     sizeChanged = pyqtSignal(int)
-    modeChanged = pyqtSignal(str)
     phaseChanged = pyqtSignal(int)
     regenerate = pyqtSignal()
     lengthScaleChanged = pyqtSignal(float, float)
     clearLithotype = pyqtSignal()
-    domainSizeChanged = pyqtSignal(int, int)
+    toolChanged = pyqtSignal(str)
     def __init__(self):
         super().__init__()
         self.layout = QVBoxLayout(self)
@@ -25,24 +24,36 @@ class ControlsPanel(QWidget):
 
         self.shape_combo = QComboBox()
         self.shape_combo.setToolTip("Select the shape of the brush.")
-        self.shape_combo.addItems(["Circle", "Triangle"])
+        self.shape_combo.addItems(["Circle", "Triangle", "Square"])
         self.shape_combo.currentTextChanged.connect(self.shapeChanged)
         brush_layout.addWidget(QLabel("Shape:"))
         brush_layout.addWidget(self.shape_combo)
 
         self.size_slider = QSlider(Qt.Horizontal)
         self.size_slider.setToolTip("Adjust the size of the brush.")
-        self.size_slider.setRange(1, 50)
-        self.size_slider.setValue(20)
+        self.size_slider.setRange(1, 75)
+        self.size_slider.setValue(25)
         self.size_slider.valueChanged.connect(self.sizeChanged)
-        brush_layout.addWidget(QLabel("Size:"))
         brush_layout.addWidget(self.size_slider)
 
-        self.mode_button = QPushButton("Mode: Add")
-        self.mode_button.setToolTip("Toggle between adding and subtracting phases.")
-        self.mode_button.setCheckable(True)
-        self.mode_button.toggled.connect(self.on_mode_toggled)
-        brush_layout.addWidget(self.mode_button)
+        tool_layout = QHBoxLayout()
+        self.brush_tool_button = QPushButton("Brush")
+        self.brush_tool_button.setCheckable(True)
+        self.brush_tool_button.setChecked(True) # Default to brush tool
+        self.brush_tool_button.toggled.connect(lambda checked: self._on_tool_toggled("brush", checked))
+        tool_layout.addWidget(self.brush_tool_button)
+
+        self.fill_tool_button = QPushButton("Fill")
+        self.fill_tool_button.setCheckable(True)
+        self.fill_tool_button.toggled.connect(lambda checked: self._on_tool_toggled("fill", checked))
+        tool_layout.addWidget(self.fill_tool_button)
+
+        self.tool_group = QButtonGroup(self)
+        self.tool_group.setExclusive(True)
+        self.tool_group.addButton(self.brush_tool_button)
+        self.tool_group.addButton(self.fill_tool_button)
+        
+        brush_layout.addLayout(tool_layout)
         
         self.layout.addWidget(brush_group)
 
@@ -102,35 +113,13 @@ class ControlsPanel(QWidget):
 
         self.layout.addWidget(sim_group)
 
-        # Domain Size Inputs
-        domain_size_group = QGroupBox("Domain Size (pixels)")
-        domain_size_layout = QVBoxLayout()
-        domain_size_group.setLayout(domain_size_layout)
-
-        self.domain_width_spinbox = QSpinBox()
-        self.domain_width_spinbox.setRange(50, 500)
-        self.domain_width_spinbox.setValue(200)
-        self.domain_width_spinbox.valueChanged.connect(lambda value: self.domainSizeChanged.emit(value, self.domain_height_spinbox.value()))
-        domain_size_layout.addWidget(QLabel("Width:"))
-        domain_size_layout.addWidget(self.domain_width_spinbox)
-
-        self.domain_height_spinbox = QSpinBox()
-        self.domain_height_spinbox.setRange(50, 500)
-        self.domain_height_spinbox.setValue(200)
-        self.domain_height_spinbox.valueChanged.connect(lambda value: self.domainSizeChanged.emit(self.domain_width_spinbox.value(), value))
-        domain_size_layout.addWidget(QLabel("Height:"))
-        domain_size_layout.addWidget(self.domain_height_spinbox)
-        self.layout.addWidget(domain_size_group)
+        
 
     
 
-    def on_mode_toggled(self, checked):
+    def _on_tool_toggled(self, tool_name, checked):
         if checked:
-            self.mode_button.setText("Mode: Subtract")
-            self.modeChanged.emit("subtract")
-        else:
-            self.mode_button.setText("Mode: Add")
-            self.modeChanged.emit("add")
+            self.toolChanged.emit(tool_name)
 
     def update_phase_buttons(self, num_phases, colors):
         # Clear existing buttons

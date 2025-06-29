@@ -1,73 +1,75 @@
-# Interactive Plurigaussian Simulation App
+# Interactive Plurigaussian Simulation
 
-This is an interactive desktop application built with PyQt and GSTools, designed to allow users to draw lithotype fields (L) on a grid and visualize real-time Plurigaussian Simulation (PGS) outputs (P). It's a tool for geoscientists and enthusiasts to explore geostatistical concepts interactively.
+An interactive desktop application for exploring Plurigaussian Simulation (PGS) in geostatistical modeling.
+
+## Description
+
+This tool provides an intuitive interface for understanding and experimenting with Plurigaussian Simulation, a powerful geostatistical method used in subsurface modeling and geological characterization. The application allows users to interactively define lithotypes and observe how they influence the realisations.
+
+## Purpose
+
+The primary objective of this tool is to facilitate the exploration and understanding of lithotype relationships in geostatistical simulations. It serves as:
+
+- **Educational Resource**: Provides hands-on experience with PGS concepts for students and researchers
+- **Research Tool**: Enables rapid prototyping and testing of lithotype configurations
+- **Visualization Platform**: Offers real-time feedback on the relationship between lithotype constraints and simulated fields
+- **Interactive Learning**: Bridges the gap between theoretical understanding and practical application of PGS methods
 
 ## Features
 
-*   **Interactive Grid Editor**: Draw lithotypes on a 150x150 grid.
-*   **Brush Tools**: Utilize circle and triangle brush shapes with adjustable size and add/subtract modes.
-*   **Fixed 5 Phases**: Work with 5 predefined categorical phases (0-4), with clear color mapping (Phase 0: Black, Phase 1: White, Phase 2: Red, Phase 3: Green, Phase 4: Blue).
-*   **Real-time Simulation**: Side-by-side display of the lithotype (L) and the simulated plurigaussian field (P), updating dynamically with each edit.
-*   **Regenerate Random Fields**: Button to sample new realizations of the underlying random fields.
-*   **Clear Lithotype**: Button to reset the lithotype grid to all Phase 0.
-*   **Adjustable Length Scales**: Input fields for controlling the X and Y length scales of the random fields, with debounced updates for smooth interaction.
-*   **Adjustable Domain Size**: Input fields for setting the width and height of the simulation grid (defaulting to 150x150).
-*   **Responsive Layout**: A 3-column layout (Controls | Lithotype | Simulation) with a fixed-width, vertically scrollable controls panel and dynamically resizing canvas areas.
+### Interactive Modeling Environment
+- **Real-time Simulation**: Instantaneous PGS updates as lithotypes are modified
+- **Multi-phase Support**: Work with up to 5 categorical phases with distinct visual representation
+- **Flexible Drawing Tools**: Multiple brush shapes (circle, triangle, square) with adjustable sizes
+- **Fill Tool**: Rapid lithotype assignment using flood-fill algorithms
 
-## Directory Structure
-
-```
-project_root/
-├── app/
-│   ├── main.py           # Application entry point
-│   ├── ui/               # PyQt UI modules
-│   │   ├── __init__.py
-│   │   ├── main_window.py
-│   │   ├── canvas.py     # Custom drawing widget for lithotype
-│   │   ├── controls.py   # UI controls (brush settings, phase selector, simulation params)
-│   │   └── result_widget.py # Read-only widget for simulation output
-│   └── logic/
-│       ├── __init__.py
-│       ├── data_model.py # (Currently unused, placeholder for future data structures)
-│       └── simulation.py # GSTools integration and PGS logic
-├── requirements.txt      # Python dependencies
-└── README.md             # This README file
-```
+### Geostatistical Controls
+- **Adjustable Correlation Lengths**: Independent control of X and Y direction correlation scales
+- **Random Field Regeneration**: Sample new realizations while maintaining lithotype constraints
 
 ## Installation
 
-It is recommended to use a `conda` environment for managing dependencies.
+### Prerequisites
+- Python 3.9 or higher
+- Conda package manager (recommended)
 
-1.  **Clone the repository**:
-    ```bash
-    git clone https://github.com/your-username/interactive-plurigaussian-simulation.git
-    cd interactive-plurigaussian-simulation
-    ```
+### Dependencies
+The application requires the following Python packages:
+- `PyQt5` - GUI framework
+- `gstools` - Geostatistical simulation library
+- `numpy` - Numerical computing
 
-2.  **Create and activate a conda environment (recommended)**:
-    ```bash
-    conda create -n intPGS python=3.9
-    conda activate intPGS
-    ```
+### Setup Instructions
 
-3.  **Install dependencies**:
-    ```bash
-    pip install -r requirements.txt
-    ```
+1. **Clone the repository**:
+   ```bash
+   git clone https://github.com/your-username/interactive-plurigaussian-simulation.git
+   cd interactive-plurigaussian-simulation
+   ```
+
+2. **Create a conda environment** (recommended):
+   ```bash
+   conda create -n pgs-interactive python=3.9
+   conda activate pgs-interactive
+   ```
+
+3. **Install dependencies**:
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+4. **Run the application**:
+   ```bash
+   python app/main.py
+   ```
 
 ## Usage
 
-To run the application, execute the `main.py` script:
-
-```bash
-python app/main.py
-```
-
-The application window will open with the default 150x150 grid, 5 phases, and length scales of 15. You can then interact with the controls to draw lithotypes, regenerate simulations, and adjust parameters.
+Launch the application and begin by selecting lithotype phases from the control panel. Use the drawing tools to create lithotype patterns on the left canvas, and observe the corresponding PGS simulation results on the right canvas. Adjust correlation lengths and regenerate random fields to explore different scenarios.
 
 ## Contributing
 
-Contributions are welcome! If you find a bug or have a feature request, please open an issue. If you'd like to contribute code, please fork the repository and submit a pull request.
+Contributions are welcome from the academic and research community. Please fork the repository and submit pull requests for any enhancements or bug fixes.
 
 ## License
 

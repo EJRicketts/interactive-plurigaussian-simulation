@@ -22,14 +22,14 @@ class MainWindow(QMainWindow):
         self.controls_widget = ControlsPanel()
         self.controls_widget.setFixedWidth(300) # Set a fixed width for the controls panel
         
-        initial_width = self.controls_widget.domain_width_spinbox.value()
-        initial_height = self.controls_widget.domain_height_spinbox.value()
+        fixed_width = 250
+        fixed_height = 250
 
         # Simulation Engine
-        self.simulation_engine = SimulationEngine(width=initial_width, height=initial_height)
+        self.simulation_engine = SimulationEngine(width=fixed_width, height=fixed_height)
 
-        self.l_canvas_widget = CanvasWidget(width=initial_width, height=initial_height)
-        self.p_canvas_widget = ResultWidget(width=initial_width, height=initial_height)
+        self.l_canvas_widget = CanvasWidget(width=fixed_width, height=fixed_height)
+        self.p_canvas_widget = ResultWidget(width=fixed_width, height=fixed_height)
         self.p_canvas_widget.set_data(self.simulation_engine.simulate())
 
         self.controls_scroll_area = QScrollArea()
@@ -58,12 +58,11 @@ class MainWindow(QMainWindow):
         self.l_canvas_widget.strokeFinished.connect(self.run_simulation)
         self.controls_widget.shapeChanged.connect(self.l_canvas_widget.set_brush_shape)
         self.controls_widget.sizeChanged.connect(self.l_canvas_widget.set_brush_size)
-        self.controls_widget.modeChanged.connect(self.l_canvas_widget.set_draw_mode)
         self.controls_widget.phaseChanged.connect(self.l_canvas_widget.set_phase)
         self.controls_widget.regenerate.connect(self.regenerate_fields)
         self.controls_widget.clearLithotype.connect(self.clear_lithotype)
         self.controls_widget.lengthScaleChanged.connect(self.update_length_scales)
-        self.controls_widget.domainSizeChanged.connect(self.set_domain_size)
+        self.controls_widget.toolChanged.connect(self.l_canvas_widget.set_tool)
         
 
     def run_simulation(self, grid):
@@ -80,11 +79,7 @@ class MainWindow(QMainWindow):
         p_field = self.simulation_engine.regenerate_fields()
         self.p_canvas_widget.set_data(p_field.T)
 
-    def set_domain_size(self, width, height):
-        self.l_canvas_widget.set_size(width, height)
-        self.p_canvas_widget.set_size(width, height)
-        self.simulation_engine.set_domain_size(width, height)
-        self.run_simulation(self.l_canvas_widget.grid)
+    
 
     def update_length_scales(self, len_scale_x, len_scale_y):
         self.simulation_engine.set_length_scales(len_scale_x, len_scale_y)

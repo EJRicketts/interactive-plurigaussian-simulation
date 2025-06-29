@@ -13,7 +13,7 @@ class ResultWidget(QWidget):
         QColor(255, 255, 0),    # Phase 5 - Yellow
     ]
 
-    def __init__(self, width=100, height=100):
+    def __init__(self, width=250, height=250):
         super().__init__()
         self.image_size = QSize(width, height)
         self.image = QImage(self.image_size, QImage.Format_RGB32)
@@ -42,8 +42,4 @@ class ResultWidget(QWidget):
                 self.image.setPixelColor(x, y, self.COLORS[phase % len(self.COLORS)])
         self.update()
 
-    def set_size(self, width, height):
-        self.image_size = QSize(width, height)
-        self.image = QImage(width, height, QImage.Format_RGB32)
-        self.image.fill(self.COLORS[0]) # Initialize with Phase 0 color (black)
-        self.update()
+    

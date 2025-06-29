@@ -17,7 +17,7 @@ class CanvasWidget(QWidget):
         QColor(0, 255, 255),    # Phase 6 - Cyan
     ]
 
-    def __init__(self, width=100, height=100):
+    def __init__(self, width=250, height=250):
         super().__init__()
         self.image_size = QSize(height, width)
         self.image = QImage(self.image_size, QImage.Format_RGB32)
@@ -27,7 +27,7 @@ class CanvasWidget(QWidget):
         self.drawing = False
         self.brush_size = 5
         self.brush_shape = "Circle"
-        self.draw_mode = "add"
+        self.current_tool = "brush"
         self.current_phase = 1
         
         self.target_rect = QRect()
@@ -40,8 +40,8 @@ class CanvasWidget(QWidget):
     def set_brush_shape(self, shape):
         self.brush_shape = shape.lower()
 
-    def set_draw_mode(self, mode):
-        self.draw_mode = mode
+    def set_tool(self, tool_name):
+        self.current_tool = tool_name
 
     def set_phase(self, phase):
         self.current_phase = phase
@@ -60,8 +60,13 @@ class CanvasWidget(QWidget):
 
     def mousePressEvent(self, event):
         if event.button() == Qt.LeftButton and self.target_rect.contains(event.pos()):
-            self.drawing = True
-            self.draw_at_pos(event.pos())
+            ix, iy = self.map_widget_to_image_coords(event.pos())
+            if self.current_tool == "fill":
+                self._flood_fill(iy, ix, self.grid[iy, ix], self.current_phase)
+                self.strokeFinished.emit(self.grid)
+            elif self.current_tool == "brush":
+                self.drawing = True
+                self.draw_at_pos(event.pos())
 
     def mouseMoveEvent(self, event):
         if self.drawing and self.target_rect.contains(event.pos()):
@@ -85,7 +90,7 @@ class CanvasWidget(QWidget):
         ix, iy = self.map_widget_to_image_coords(pos)
         
         painter = QPainter(self.image)
-        color = self.COLORS[self.current_phase] if self.draw_mode == "add" else self.COLORS[0]
+        color = self.COLORS[self.current_phase]
         painter.setBrush(color)
         painter.setPen(Qt.NoPen)
 
@@ -96,12 +101,19 @@ class CanvasWidget(QWidget):
         if self.brush_shape == "circle":
             painter.drawEllipse(QPoint(ix, iy), half_brush, half_brush)
         elif self.brush_shape == "triangle":
+            from PyQt5.QtGui import QPolygon
+            import math
+            # Create equilateral triangle with center at (ix, iy)
+            height = int(half_brush * math.sqrt(3))
             points = [
-                QPoint(ix, iy - half_brush),
-                QPoint(ix - half_brush, iy + half_brush),
-                QPoint(ix + half_brush, iy + half_brush),
+                QPoint(ix, iy - height//2),  # Top vertex
+                QPoint(ix - half_brush, iy + height//2),  # Bottom left
+                QPoint(ix + half_brush, iy + height//2),  # Bottom right
             ]
-            painter.drawPolygon(*points)
+            polygon = QPolygon(points)
+            painter.drawPolygon(polygon)
+        elif self.brush_shape == "square":
+            painter.drawRect(start_x, start_y, self.brush_size, self.brush_size)
         else:
             # Default to circle if an unknown shape is somehow selected
             painter.drawEllipse(QPoint(ix, iy), half_brush, half_brush)
@@ -109,25 +121,55 @@ class CanvasWidget(QWidget):
         painter.end()
 
         # Update grid
-        phase_to_set = self.current_phase if self.draw_mode == "add" else 0
+        phase_to_set = self.current_phase
         
         # Create a mask for the brush shape
         y_coords, x_coords = np.ogrid[-half_brush:half_brush+1, -half_brush:half_brush+1]
         if self.brush_shape == "circle":
             mask = x_coords**2 + y_coords**2 <= half_brush**2
         elif self.brush_shape == "triangle":
-            mask = (y_coords >= x_coords - half_brush) & (y_coords <= half_brush)
+            # Create equilateral triangle mask
+            import math
+            height = int(half_brush * math.sqrt(3))
+            # Triangle with apex at top, base at bottom
+            mask = (y_coords >= abs(x_coords) * math.sqrt(3) - height//2) & (y_coords <= height//2)
+        elif self.brush_shape == "square":
+            # Square brush mask
+            mask = (abs(x_coords) <= half_brush) & (abs(y_coords) <= half_brush)
         else:
             # Default to circle mask
             mask = x_coords**2 + y_coords**2 <= half_brush**2
 
         # Apply the mask to the grid
-        for r in range(self.brush_size):
-            for c in range(self.brush_size):
+        for r in range(mask.shape[0]):
+            for c in range(mask.shape[1]):
                 if mask[r, c]:
                     ny, nx = start_y + r, start_x + c
                     if 0 <= ny < self.grid.shape[0] and 0 <= nx < self.grid.shape[1]:
                         self.grid[ny, nx] = phase_to_set
+
+        self.set_data(self.grid)
+
+    def _flood_fill(self, start_row, start_col, target_phase, replacement_phase):
+        if target_phase == replacement_phase:
+            return
+
+        rows, cols = self.grid.shape
+        q = [(start_row, start_col)]
+        
+        while q:
+            r, c = q.pop(0)
+
+            if not (0 <= r < rows and 0 <= c < cols and self.grid[r, c] == target_phase):
+                continue
+
+            self.grid[r, c] = replacement_phase
+            self.image.setPixelColor(c, r, self.COLORS[replacement_phase % len(self.COLORS)])
+
+            q.append((r + 1, c))
+            q.append((r - 1, c))
+            q.append((r, c + 1))
+            q.append((r, c - 1))
 
         self.update()
 
@@ -144,12 +186,7 @@ class CanvasWidget(QWidget):
                 self.image.setPixelColor(x, y, self.COLORS[phase % len(self.COLORS)])
         self.update()
 
-    def set_size(self, width, height):
-        self.image_size = QSize(height, width)
-        self.image = QImage(self.image_size, QImage.Format_RGB32)
-        self.grid = np.zeros((height, width), dtype=int)
-        self.image.fill(self.COLORS[0]) # Initialize with Phase 0 color (black)
-        self.update()
+    
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)

@@ -2,7 +2,7 @@ import numpy as np
 import gstools as gs
 
 class SimulationEngine:
-    def __init__(self, width=100, height=100, len_scale_x=10.0, len_scale_y=10.0):
+    def __init__(self, width=250, height=250, len_scale_x=10.0, len_scale_y=10.0):
         self.width = width
         self.height = height
         self.grid_shape = (height, width)
@@ -38,17 +38,7 @@ class SimulationEngine:
     def update_lithotypes(self, grid: np.ndarray):
         self.lithotypes = grid
 
-    def set_domain_size(self, width, height):
-        self.width = width
-        self.height = height
-        self.grid_shape = (height, width) # (rows, columns)
-        self.lithotypes = np.zeros(self.grid_shape)
-
-        # Define coordinates for the structured grid
-        x = np.arange(0, width, 1)  # x-coordinates (columns)
-        y = np.arange(0, height, 1) # y-coordinates (rows)
-        self.coords = [y, x] # GSTools expects [y, x] for (rows, columns) array
-        self.regenerate_fields()
+    
 
     
 
