@@ -2,6 +2,8 @@
 
 An interactive desktop application for exploring Plurigaussian Simulation (PGS) in geostatistical modeling, designed for educational and research purposes.
 
+![Demo](assets/demo.gif)
+
 ## Description
 
 This tool provides an intuitive interface for understanding and experimenting with Plurigaussian Simulation, a powerful geostatistical method used in subsurface modeling and geological characterization. The application allows users to interactively define lithotypes and observe how they influence the realizations through real-time visualization.
