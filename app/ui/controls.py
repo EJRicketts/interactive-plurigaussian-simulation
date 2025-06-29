@@ -32,8 +32,8 @@ class ControlsPanel(QWidget):
 
         self.size_slider = QSlider(Qt.Horizontal)
         self.size_slider.setToolTip("Adjust the size of the brush.")
-        self.size_slider.setRange(1, 20)
-        self.size_slider.setValue(5)
+        self.size_slider.setRange(1, 50)
+        self.size_slider.setValue(20)
         self.size_slider.valueChanged.connect(self.sizeChanged)
         brush_layout.addWidget(QLabel("Size:"))
         brush_layout.addWidget(self.size_slider)
