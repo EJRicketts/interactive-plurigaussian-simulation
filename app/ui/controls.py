@@ -1,8 +1,20 @@
-from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QGroupBox, QComboBox, 
-                             QSlider, QPushButton, QToolButton, QHBoxLayout,
-                             QLabel, QSpinBox, QDoubleSpinBox, QButtonGroup)
+from PyQt5.QtWidgets import (
+    QWidget,
+    QVBoxLayout,
+    QGroupBox,
+    QComboBox,
+    QSlider,
+    QPushButton,
+    QToolButton,
+    QHBoxLayout,
+    QLabel,
+    QSpinBox,
+    QDoubleSpinBox,
+    QButtonGroup,
+)
 from PyQt5.QtCore import pyqtSignal, Qt, QTimer
 from PyQt5.QtGui import QIcon, QPixmap, QColor
+
 
 class ControlsPanel(QWidget):
     shapeChanged = pyqtSignal(str)
@@ -19,6 +31,7 @@ class ControlsPanel(QWidget):
     saveState = pyqtSignal()
     loadState = pyqtSignal()
     exportImages = pyqtSignal()
+
     def __init__(self):
         super().__init__()
         self.layout = QVBoxLayout(self)
@@ -46,22 +59,26 @@ class ControlsPanel(QWidget):
         tool_layout = QHBoxLayout()
         self.brush_tool_button = QPushButton("Brush")
         self.brush_tool_button.setCheckable(True)
-        self.brush_tool_button.setChecked(True) # Default to brush tool
-        self.brush_tool_button.toggled.connect(lambda checked: self._on_tool_toggled("brush", checked))
+        self.brush_tool_button.setChecked(True)  # Default to brush tool
+        self.brush_tool_button.toggled.connect(
+            lambda checked: self._on_tool_toggled("brush", checked)
+        )
         tool_layout.addWidget(self.brush_tool_button)
 
         self.fill_tool_button = QPushButton("Fill")
         self.fill_tool_button.setCheckable(True)
-        self.fill_tool_button.toggled.connect(lambda checked: self._on_tool_toggled("fill", checked))
+        self.fill_tool_button.toggled.connect(
+            lambda checked: self._on_tool_toggled("fill", checked)
+        )
         tool_layout.addWidget(self.fill_tool_button)
 
         self.tool_group = QButtonGroup(self)
         self.tool_group.setExclusive(True)
         self.tool_group.addButton(self.brush_tool_button)
         self.tool_group.addButton(self.fill_tool_button)
-        
+
         brush_layout.addLayout(tool_layout)
-        
+
         # Undo/Redo buttons
         undo_redo_layout = QHBoxLayout()
         self.undo_button = QPushButton("Undo")
@@ -69,15 +86,15 @@ class ControlsPanel(QWidget):
         self.undo_button.clicked.connect(self.undoRequested)
         self.undo_button.setEnabled(False)  # Start disabled
         undo_redo_layout.addWidget(self.undo_button)
-        
+
         self.redo_button = QPushButton("Redo")
         self.redo_button.setToolTip("Redo last undone action (Ctrl+Y)")
         self.redo_button.clicked.connect(self.redoRequested)
         self.redo_button.setEnabled(False)  # Start disabled
         undo_redo_layout.addWidget(self.redo_button)
-        
+
         brush_layout.addLayout(undo_redo_layout)
-        
+
         self.layout.addWidget(brush_group)
 
         # Phase Controls
@@ -97,7 +114,9 @@ class ControlsPanel(QWidget):
         sim_group.setLayout(sim_layout)
 
         self.regenerate_button = QPushButton("Regenerate Random Fields")
-        self.regenerate_button.setToolTip("Generate a new set of random fields for the simulation.")
+        self.regenerate_button.setToolTip(
+            "Generate a new set of random fields for the simulation."
+        )
         self.regenerate_button.clicked.connect(self.regenerate)
         sim_layout.addWidget(self.regenerate_button)
 
@@ -105,37 +124,39 @@ class ControlsPanel(QWidget):
         self.clear_lithotype_button.setToolTip("Clear the lithotype grid to phase 0.")
         self.clear_lithotype_button.clicked.connect(self.clearLithotype)
         sim_layout.addWidget(self.clear_lithotype_button)
-        
+
         self.update_parameters_button = QPushButton("Update Parameters")
-        self.update_parameters_button.setToolTip("Apply length scale changes and regenerate fields while keeping lithotype.")
+        self.update_parameters_button.setToolTip(
+            "Apply length scale changes and regenerate fields while keeping lithotype."
+        )
         self.update_parameters_button.clicked.connect(self.updateParameters)
         sim_layout.addWidget(self.update_parameters_button)
-        
+
         self.reset_defaults_button = QPushButton("Reset to Defaults")
-        self.reset_defaults_button.setToolTip("Reset all parameters to default values and clear lithotype.")
+        self.reset_defaults_button.setToolTip(
+            "Reset all parameters to default values and clear lithotype."
+        )
         self.reset_defaults_button.clicked.connect(self.resetToDefaults)
         sim_layout.addWidget(self.reset_defaults_button)
-        
+
         # Save/Load buttons
         save_load_layout = QHBoxLayout()
         self.save_button = QPushButton("Save State")
         self.save_button.setToolTip("Save current lithotype and parameters to file.")
         self.save_button.clicked.connect(self.saveState)
         save_load_layout.addWidget(self.save_button)
-        
+
         self.load_button = QPushButton("Load State")
         self.load_button.setToolTip("Load lithotype and parameters from file.")
         self.load_button.clicked.connect(self.loadState)
         save_load_layout.addWidget(self.load_button)
-        
+
         sim_layout.addLayout(save_load_layout)
-        
+
         self.export_button = QPushButton("Export Images")
         self.export_button.setToolTip("Export lithotype and realization as PNG images.")
         self.export_button.clicked.connect(self.exportImages)
         sim_layout.addWidget(self.export_button)
-
-        
 
         # Length Scale Inputs
         length_scale_group = QGroupBox("Length Scales")
@@ -189,10 +210,6 @@ class ControlsPanel(QWidget):
 
         self.layout.addWidget(sim_group)
 
-        
-
-    
-
     def _on_tool_toggled(self, tool_name, checked):
         if checked:
             self.toolChanged.emit(tool_name)
@@ -204,16 +221,18 @@ class ControlsPanel(QWidget):
             button.deleteLater()
         self.phase_buttons = []
 
-        for i in range(num_phases): # Dynamically display phases based on num_phases
+        for i in range(num_phases):  # Dynamically display phases based on num_phases
             pixmap = QPixmap(16, 16)
             pixmap.fill(QColor(colors[i]))
             icon = QIcon(pixmap)
-            
+
             button = QToolButton()
             button.setIcon(icon)
             button.setCheckable(True)
-            button.clicked.connect(lambda checked, phase=i: self.phase_button_clicked(phase, checked))
-            
+            button.clicked.connect(
+                lambda checked, phase=i: self.phase_button_clicked(phase, checked)
+            )
+
             self.phase_buttons_layout.addWidget(button)
             self.phase_buttons.append(button)
 
@@ -239,7 +258,7 @@ class ControlsPanel(QWidget):
         default_len_scale = 15.0
         default_domain_width = 250
         default_domain_height = 250
-        
+
         # Reset controls
         self.size_slider.setValue(default_brush_size)
         self.shape_combo.setCurrentText("Circle")
@@ -247,11 +266,11 @@ class ControlsPanel(QWidget):
         self.len_scale_y_spinbox.setValue(default_len_scale)
         self.width_spinbox.setValue(default_domain_width)
         self.height_spinbox.setValue(default_domain_height)
-        
+
         # Reset tool selection
         self.brush_tool_button.setChecked(True)
         self.fill_tool_button.setChecked(False)
-        
+
         # Reset phase selection to phase 0
         if self.phase_buttons:
             for i, btn in enumerate(self.phase_buttons):

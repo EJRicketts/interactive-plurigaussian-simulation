@@ -4,17 +4,18 @@ from PyQt5.QtCore import Qt, QSize, pyqtSignal, QPoint, QRect
 import numpy as np
 import sys
 
+
 class CanvasWidget(QWidget):
     strokeFinished = pyqtSignal(np.ndarray)
 
     COLORS = [
-        QColor(0, 0, 0),        # Phase 0 - Black
+        QColor(0, 0, 0),  # Phase 0 - Black
         QColor(255, 255, 255),  # Phase 1 - White
-        QColor(255, 0, 0),      # Phase 2 - Red
-        QColor(0, 255, 0),      # Phase 3 - Green
-        QColor(0, 0, 255),      # Phase 4 - Blue
-        QColor(255, 255, 0),    # Phase 5 - Yellow
-        QColor(0, 255, 255),    # Phase 6 - Cyan
+        QColor(255, 0, 0),  # Phase 2 - Red
+        QColor(0, 255, 0),  # Phase 3 - Green
+        QColor(0, 0, 255),  # Phase 4 - Blue
+        QColor(255, 255, 0),  # Phase 5 - Yellow
+        QColor(0, 255, 255),  # Phase 6 - Cyan
     ]
 
     def __init__(self, width=250, height=250):
@@ -22,25 +23,25 @@ class CanvasWidget(QWidget):
         self.image_size = QSize(width, height)
         self.image = QImage(self.image_size, QImage.Format_RGB32)
         self.grid = np.zeros((height, width), dtype=int)
-        self.image.fill(self.COLORS[0]) # Initialize with Phase 0 color (black)
-        
+        self.image.fill(self.COLORS[0])  # Initialize with Phase 0 color (black)
+
         self.drawing = False
         self.brush_size = 5
         self.brush_shape = "Circle"
         self.current_tool = "brush"
         self.current_phase = 1
-        
+
         # Undo/Redo system
         self.history = [self.grid.copy()]  # Start with initial state
         self.history_index = 0
         self.max_history = 20  # Limit history to prevent memory issues
-        
+
         self.target_rect = QRect()
-        
+
         self.setMinimumSize(200, 200)
         self.setFocusPolicy(Qt.StrongFocus)  # Enable keyboard focus
         self.setMouseTracking(True)  # Enable mouse tracking for preview
-        
+
         # Brush preview
         self.mouse_pos = QPoint(-1, -1)  # Track mouse position
         self.show_preview = False
@@ -60,12 +61,12 @@ class CanvasWidget(QWidget):
     def save_state(self):
         """Save current grid state to history after an action is completed"""
         # Remove any states after current index (when user made changes after undo)
-        self.history = self.history[:self.history_index + 1]
-        
+        self.history = self.history[: self.history_index + 1]
+
         # Add the new state (current grid after the action)
         self.history.append(self.grid.copy())
         self.history_index = len(self.history) - 1
-        
+
         # Limit history size
         if len(self.history) > self.max_history:
             self.history.pop(0)
@@ -100,15 +101,15 @@ class CanvasWidget(QWidget):
     def paintEvent(self, event):
         painter = QPainter(self)
         painter.setRenderHint(QPainter.Antialiasing, False)
-        
+
         widget_rect = self.rect()
         scaled_size = self.image_size.scaled(widget_rect.size(), Qt.KeepAspectRatio)
-        
+
         self.target_rect = QRect(QPoint(0, 0), scaled_size)
         self.target_rect.moveCenter(widget_rect.center())
 
         painter.drawImage(self.target_rect, self.image, self.image.rect())
-        
+
         # Draw brush preview
         if self.show_preview and self.current_tool == "brush" and not self.drawing:
             self.draw_brush_preview(painter)
@@ -172,33 +173,42 @@ class CanvasWidget(QWidget):
         """Draw brush preview at mouse position"""
         if self.mouse_pos.x() < 0 or self.mouse_pos.y() < 0:
             return
-            
+
         # Map mouse position to image coordinates for size calculation
         ix, iy = self.map_widget_to_image_coords(self.mouse_pos)
-        
+
         # Calculate brush size in widget coordinates
         scale_x = self.target_rect.width() / self.image.width()
         scale_y = self.target_rect.height() / self.image.height()
         scale = min(scale_x, scale_y)  # Use the smaller scale to maintain aspect ratio
-        
+
         widget_brush_size = self.brush_size * scale
         half_brush = widget_brush_size / 2
-        
+
         # Set up preview drawing
-        painter.setPen(QPen(QColor(255, 255, 255, 180), 2, Qt.DashLine))  # Semi-transparent white dashed line
+        painter.setPen(
+            QPen(QColor(255, 255, 255, 180), 2, Qt.DashLine)
+        )  # Semi-transparent white dashed line
         painter.setBrush(Qt.NoBrush)
-        
+
         # Draw preview shape
         if self.brush_shape.lower() == "circle":
             painter.drawEllipse(self.mouse_pos, int(half_brush), int(half_brush))
         elif self.brush_shape.lower() == "triangle":
             from PyQt5.QtGui import QPolygon
             import math
+
             height = int(half_brush * math.sqrt(3))
             points = [
-                QPoint(self.mouse_pos.x(), self.mouse_pos.y() - height//2),
-                QPoint(self.mouse_pos.x() - int(half_brush), self.mouse_pos.y() + height//2),
-                QPoint(self.mouse_pos.x() + int(half_brush), self.mouse_pos.y() + height//2),
+                QPoint(self.mouse_pos.x(), self.mouse_pos.y() - height // 2),
+                QPoint(
+                    self.mouse_pos.x() - int(half_brush),
+                    self.mouse_pos.y() + height // 2,
+                ),
+                QPoint(
+                    self.mouse_pos.x() + int(half_brush),
+                    self.mouse_pos.y() + height // 2,
+                ),
             ]
             polygon = QPolygon(points)
             painter.drawPolygon(polygon)
@@ -207,21 +217,23 @@ class CanvasWidget(QWidget):
                 self.mouse_pos.x() - int(half_brush),
                 self.mouse_pos.y() - int(half_brush),
                 int(widget_brush_size),
-                int(widget_brush_size)
+                int(widget_brush_size),
             )
 
     def map_widget_to_image_coords(self, pos):
         x_rel = pos.x() - self.target_rect.x()
         y_rel = pos.y() - self.target_rect.y()
-        
+
         ix = int(x_rel * self.image.width() / self.target_rect.width())
         iy = int(y_rel * self.image.height() / self.target_rect.height())
 
-        return max(0, min(ix, self.image.width() - 1)), max(0, min(iy, self.image.height() - 1))
+        return max(0, min(ix, self.image.width() - 1)), max(
+            0, min(iy, self.image.height() - 1)
+        )
 
     def draw_at_pos(self, pos):
         ix, iy = self.map_widget_to_image_coords(pos)
-        
+
         painter = QPainter(self.image)
         color = self.COLORS[self.current_phase]
         painter.setBrush(color)
@@ -230,18 +242,19 @@ class CanvasWidget(QWidget):
         half_brush = self.brush_size // 2
         start_x = ix - half_brush
         start_y = iy - half_brush
-        
+
         if self.brush_shape == "circle":
             painter.drawEllipse(QPoint(ix, iy), half_brush, half_brush)
         elif self.brush_shape == "triangle":
             from PyQt5.QtGui import QPolygon
             import math
+
             # Create equilateral triangle with center at (ix, iy)
             height = int(half_brush * math.sqrt(3))
             points = [
-                QPoint(ix, iy - height//2),  # Top vertex
-                QPoint(ix - half_brush, iy + height//2),  # Bottom left
-                QPoint(ix + half_brush, iy + height//2),  # Bottom right
+                QPoint(ix, iy - height // 2),  # Top vertex
+                QPoint(ix - half_brush, iy + height // 2),  # Bottom left
+                QPoint(ix + half_brush, iy + height // 2),  # Bottom right
             ]
             polygon = QPolygon(points)
             painter.drawPolygon(polygon)
@@ -255,17 +268,22 @@ class CanvasWidget(QWidget):
 
         # Update grid
         phase_to_set = self.current_phase
-        
+
         # Create a mask for the brush shape
-        y_coords, x_coords = np.ogrid[-half_brush:half_brush+1, -half_brush:half_brush+1]
+        y_coords, x_coords = np.ogrid[
+            -half_brush : half_brush + 1, -half_brush : half_brush + 1
+        ]
         if self.brush_shape == "circle":
             mask = x_coords**2 + y_coords**2 <= half_brush**2
         elif self.brush_shape == "triangle":
             # Create equilateral triangle mask
             import math
+
             height = int(half_brush * math.sqrt(3))
             # Triangle with apex at top, base at bottom
-            mask = (y_coords >= abs(x_coords) * math.sqrt(3) - height//2) & (y_coords <= height//2)
+            mask = (y_coords >= abs(x_coords) * math.sqrt(3) - height // 2) & (
+                y_coords <= height // 2
+            )
         elif self.brush_shape == "square":
             # Square brush mask
             mask = (abs(x_coords) <= half_brush) & (abs(y_coords) <= half_brush)
@@ -289,15 +307,19 @@ class CanvasWidget(QWidget):
 
         rows, cols = self.grid.shape
         q = [(start_row, start_col)]
-        
+
         while q:
             r, c = q.pop(0)
 
-            if not (0 <= r < rows and 0 <= c < cols and self.grid[r, c] == target_phase):
+            if not (
+                0 <= r < rows and 0 <= c < cols and self.grid[r, c] == target_phase
+            ):
                 continue
 
             self.grid[r, c] = replacement_phase
-            self.image.setPixelColor(c, r, self.COLORS[replacement_phase % len(self.COLORS)])
+            self.image.setPixelColor(
+                c, r, self.COLORS[replacement_phase % len(self.COLORS)]
+            )
 
             q.append((r + 1, c))
             q.append((r - 1, c))
@@ -319,12 +341,11 @@ class CanvasWidget(QWidget):
                 self.image.setPixelColor(x, y, self.COLORS[phase % len(self.COLORS)])
         self.update()
 
-    
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     app = QApplication(sys.argv)
     canvas = CanvasWidget()
-    
+
     def on_stroke_finished(grid):
         print("Stroke finished. Grid shape:", grid.shape)
         print("Number of modified cells:", np.count_nonzero(grid))

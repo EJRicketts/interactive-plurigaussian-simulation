@@ -3,14 +3,15 @@ from PyQt5.QtGui import QImage, QPainter, QColor
 from PyQt5.QtCore import Qt, QSize, QRect, QPoint
 import numpy as np
 
+
 class ResultWidget(QWidget):
     COLORS = [
-        QColor(0, 0, 0),        # Phase 0 - Black
+        QColor(0, 0, 0),  # Phase 0 - Black
         QColor(255, 255, 255),  # Phase 1 - White
-        QColor(255, 0, 0),      # Phase 2 - Red
-        QColor(0, 255, 0),      # Phase 3 - Green
-        QColor(0, 0, 255),      # Phase 4 - Blue
-        QColor(255, 255, 0),    # Phase 5 - Yellow
+        QColor(255, 0, 0),  # Phase 2 - Red
+        QColor(0, 255, 0),  # Phase 3 - Green
+        QColor(0, 0, 255),  # Phase 4 - Blue
+        QColor(255, 255, 0),  # Phase 5 - Yellow
     ]
 
     def __init__(self, width=250, height=250):
@@ -41,5 +42,3 @@ class ResultWidget(QWidget):
                 phase = grid[y, x]
                 self.image.setPixelColor(x, y, self.COLORS[phase % len(self.COLORS)])
         self.update()
-
-    
