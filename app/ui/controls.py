@@ -139,7 +139,7 @@ class ControlsPanel(QWidget):
             button.deleteLater()
         self.phase_buttons = []
 
-        for i in range(6): # Always display 6 phases (0-5)
+        for i in range(num_phases): # Dynamically display phases based on num_phases
             pixmap = QPixmap(16, 16)
             pixmap.fill(QColor(colors[i]))
             icon = QIcon(pixmap)

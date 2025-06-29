@@ -69,7 +69,7 @@ class MainWindow(QMainWindow):
     def run_simulation(self, grid):
         self.simulation_engine.update_lithotypes(grid)
         p_field = self.simulation_engine.simulate()
-        self.p_canvas_widget.set_data(p_field)
+        self.p_canvas_widget.set_data(p_field.T)
 
     def clear_lithotype(self):
         self.l_canvas_widget.grid.fill(0) # Set all cells to phase 0
@@ -78,7 +78,7 @@ class MainWindow(QMainWindow):
 
     def regenerate_fields(self):
         p_field = self.simulation_engine.regenerate_fields()
-        self.p_canvas_widget.set_data(p_field)
+        self.p_canvas_widget.set_data(p_field.T)
 
     def set_domain_size(self, width, height):
         self.l_canvas_widget.set_size(width, height)

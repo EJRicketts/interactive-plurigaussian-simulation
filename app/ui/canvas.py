@@ -19,9 +19,9 @@ class CanvasWidget(QWidget):
 
     def __init__(self, width=100, height=100):
         super().__init__()
-        self.image_size = QSize(width, height)
+        self.image_size = QSize(height, width)
         self.image = QImage(self.image_size, QImage.Format_RGB32)
-        self.grid = np.zeros((height, width), dtype=int)
+        self.grid = np.zeros((width, height), dtype=int)
         self.image.fill(self.COLORS[0]) # Initialize with Phase 0 color (black)
         
         self.drawing = False
@@ -126,7 +126,7 @@ class CanvasWidget(QWidget):
             for c in range(self.brush_size):
                 if mask[r, c]:
                     ny, nx = start_y + r, start_x + c
-                    if 0 <= ny < self.image.height() and 0 <= nx < self.image.width():
+                    if 0 <= ny < self.grid.shape[0] and 0 <= nx < self.grid.shape[1]:
                         self.grid[ny, nx] = phase_to_set
 
         self.update()
@@ -145,8 +145,8 @@ class CanvasWidget(QWidget):
         self.update()
 
     def set_size(self, width, height):
-        self.image_size = QSize(width, height)
-        self.image = QImage(width, height, QImage.Format_RGB32)
+        self.image_size = QSize(height, width)
+        self.image = QImage(self.image_size, QImage.Format_RGB32)
         self.grid = np.zeros((height, width), dtype=int)
         self.image.fill(self.COLORS[0]) # Initialize with Phase 0 color (black)
         self.update()

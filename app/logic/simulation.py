@@ -5,17 +5,16 @@ class SimulationEngine:
     def __init__(self, width=100, height=100, len_scale_x=10.0, len_scale_y=10.0):
         self.width = width
         self.height = height
-        self.grid_shape = (width, height)
+        self.grid_shape = (height, width)
         self.lithotypes = np.zeros(self.grid_shape)
-        self.num_phases = 6
-        
         self.len_scale_x = len_scale_x
         self.len_scale_y = len_scale_y
+        self.num_phases = 6
 
         # Define coordinates for the structured grid
-        x = np.arange(0, width, 1)
-        y = np.arange(0, height, 1)
-        self.coords = [x, y]
+        x = np.arange(0, width, 1)  # x-coordinates (columns)
+        y = np.arange(0, height, 1) # y-coordinates (rows)
+        self.coords = [y, x] # GSTools expects [y, x] for (rows, columns) array # GSTools expects [y, x] for (height, width) arrays
 
         # Create two independent SRFs for a 2D PGS
         self.model1 = gs.Gaussian(dim=2, var=1.0, len_scale=[self.len_scale_x, self.len_scale_y])
@@ -42,11 +41,13 @@ class SimulationEngine:
     def set_domain_size(self, width, height):
         self.width = width
         self.height = height
-        self.grid_shape = (width, height)
-        self.lithotypes = np.zeros(self.grid_shape) # Reset lithotypes on size change
-        x = np.arange(0, self.width, 1)
-        y = np.arange(0, self.height, 1)
-        self.coords = [x, y]
+        self.grid_shape = (height, width) # (rows, columns)
+        self.lithotypes = np.zeros(self.grid_shape)
+
+        # Define coordinates for the structured grid
+        x = np.arange(0, width, 1)  # x-coordinates (columns)
+        y = np.arange(0, height, 1) # y-coordinates (rows)
+        self.coords = [y, x] # GSTools expects [y, x] for (rows, columns) array
         self.regenerate_fields()
 
     
