@@ -87,8 +87,8 @@ class SimulationEngine:
         return continuous_field.astype(int)
 
     def regenerate_fields(self):
-        seed1 = np.random.randint(0, 2**32 - 1)
-        seed2 = np.random.randint(0, 2**32 - 1)
+        seed1 = np.random.randint(0, 1E6)
+        seed2 = np.random.randint(0, 1E6)
 
         field1 = self.srf1.structured(self.coords, seed=seed1)
         field2 = self.srf2.structured(self.coords, seed=seed2)

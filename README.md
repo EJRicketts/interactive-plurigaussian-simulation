@@ -76,7 +76,7 @@ The application requires the following Python packages:
 
 ##  Getting Started
 1. Launch the application to see the default 250x250 grid with 5 phases
-2. Select a phase (0-4) from the coloured buttons in the control panel
+2. Select a phase (0-5) from the coloured buttons in the control panel
 3. Choose your drawing tool (Brush or Fill) and brush shape (Circle, Triangle, Square)
 4. Draw lithotype patterns on the left "Lithotype" canvas
 5. Observe real-time PGS simulation results on the right "Realisation" canvas
